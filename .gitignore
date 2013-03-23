@@ -2,7 +2,7 @@
 bin/
 bin-debug/
 bin-release/
-js
+jslib
 
 # Other files and folders
 .settings/
