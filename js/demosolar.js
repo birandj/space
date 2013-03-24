@@ -6,17 +6,8 @@
  * To change this template use File | Settings | File Templates.
  */
 var MYAPP = {
-	phi : 0
 };
 
-MYAPP.MyObject = function(mesh) {
-	this.mesh = mesh;
-}
-MYAPP.MyObject.prototype = {
-	exec : function() {
-		alert("define me!");
-	}
-}
 
 MYAPP.MyCube = function() {
 	var materials = [
@@ -38,21 +29,22 @@ MYAPP.MyCube = function() {
 	//добавляем тень кубу
 	new THREE.ShadowVolume(this.mesh);
 }
-MYAPP.MyCube.prototype = new MYAPP.MyObject();
-MYAPP.MyCube.prototype.exec = function() {
-	var phi = 0;
-	return function() {
-		//вращаем куб по всем трем осям (переменная мэша куба доступна глобально)
-		this.mesh.rotation.x += 0.5 * Math.PI / 90;
-		this.mesh.rotation.y += 1.0 * Math.PI / 90;
-		this.mesh.rotation.z += 1.5 * Math.PI / 90;
-		//двигаем куб по кругу
-		this.mesh.position.x = Math.sin(phi) * 50;
-		this.mesh.position.y = Math.cos(phi) * 50;
-		//итерируем глобальную переменную
-		phi += 0.05;
-	}
-}();
+MYAPP.MyCube.prototype = {
+	exec : function() {
+		var phi = 0;
+		return function() {
+			//вращаем куб по всем трем осям (переменная мэша куба доступна глобально)
+			this.mesh.rotation.x += 0.5 * Math.PI / 90;
+			this.mesh.rotation.y += 1.0 * Math.PI / 90;
+			this.mesh.rotation.z += 1.5 * Math.PI / 90;
+			//двигаем куб по кругу
+			this.mesh.position.x = Math.sin(phi) * 50;
+			this.mesh.position.y = Math.cos(phi) * 50;
+			//итерируем глобальную переменную
+			phi += 0.05;
+		}
+	}()
+}
 
 MYAPP.Creator = function() {}
 MYAPP.Creator.prototype = {
