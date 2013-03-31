@@ -99,8 +99,10 @@ MYAPP.Objects.Sun = function(d,r) {
 	var texture = THREE.ImageUtils.loadTexture(MYAPP.Objects.textureMap.sun);
 	texture.needsUpdate = true;
 
-    var material = new THREE.MeshLambertMaterial( { map: texture, ambient: 0xffffff, shading: THREE.FlatShading  } );
+    var material = new THREE.MeshLambertMaterial(
+	    { map: texture, ambient: 0xffffff, shading: THREE.FlatShading  } );
 	var geometry = new THREE.SphereGeometry( d, 40, 20  );
+
 	this.mesh = new THREE.Mesh( geometry, material );
 	this.mesh.dynamic = true;
 
@@ -108,6 +110,15 @@ MYAPP.Objects.Sun = function(d,r) {
 	this.mesh.rotation.y = Math.PI/2;
 		
 	this.mesh.updateMatrix();
+
+//	var geometry2 = new THREE.SphereGeometry( d + 10, 40, 20  );
+//	var material2 = new THREE.MeshLambertMaterial(
+//		{ color: 0xffff00,  ambient: 0xff8800, transparent: true } );
+//	material2.opacity = 0.1;
+//
+//	this.mesh2 = new THREE.Mesh( geometry2, material2 );
+//	this.mesh2.dynamic = true;
+//	this.mesh2.updateMatrix();
 };
 
 MYAPP.Objects.Sun.prototype = {
@@ -202,7 +213,8 @@ MYAPP.main = function() {
 		new MYAPP.Objects.Earth( { r: 80, d: 7, w: 0.05, color: 0x00ffff} ),
 		new MYAPP.Objects.Earth( { r: 160 , d: 12 , w: 0.02, textureName: 'earth'} ),
 		new MYAPP.Objects.Earth( { r: 250, d: 12, w: 0.001, textureName: 'planet' } )];
-	
+
+	//scene.add(objects[0].mesh2);
 	for ( var i = 0; i < objects.length; i++ ) {
 		scene.add(objects[i].mesh);
 	}
