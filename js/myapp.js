@@ -67,16 +67,40 @@ MYAPP.Creator.prototype = {
 
 };
 
+
 MYAPP.Objects = {};
+MYAPP.Objects.setValues = function ( values ) {
+	if ( values === undefined ) {
+		return;
+	}
+
+	for ( var key in values ) {
+		var newValue = values[ key ];
+
+		if ( newValue === undefined ) {
+			console.warn( 'THREE.Material: \'' + key + '\' parameter is undefined.' );
+			continue;
+		}
+
+		if ( key in this ) {
+				this[ key ] = newValue;
+		}
+	}
+}
+MYAPP.Objects.textureMap = {
+	moon: 'images/moon1.jpg',
+	sun: 'images/sun3.jpg',
+	earth: 'images/earth1.jpg',
+	planet: 'images/planet1.jpg'
+}
+
 MYAPP.Objects.Sun = function(d,r) {
 	this.r = r;
-	var texture = THREE.ImageUtils.loadTexture('images/sun1.jpg');
+	var texture = THREE.ImageUtils.loadTexture(MYAPP.Objects.textureMap.sun);
 	texture.needsUpdate = true;
 
-    var material = new THREE.MeshLambertMaterial( { map: texture, color: 0xff0000 , shading: THREE.FlatShading  } );
-    
-	//var material = new THREE.MeshLambertMaterial( { color: 0xff0000 , shading: THREE.FlatShading});
-	var geometry = new THREE.SphereGeometry( d, 20, 10  );
+    var material = new THREE.MeshLambertMaterial( { map: texture, ambient: 0xffffff, shading: THREE.FlatShading  } );
+	var geometry = new THREE.SphereGeometry( d, 40, 20  );
 	this.mesh = new THREE.Mesh( geometry, material );
 	this.mesh.dynamic = true;
 
@@ -84,8 +108,8 @@ MYAPP.Objects.Sun = function(d,r) {
 	this.mesh.rotation.y = Math.PI/2;
 		
 	this.mesh.updateMatrix();
-	this.mesh.matrixAutoUpdate = false;
 };
+
 MYAPP.Objects.Sun.prototype = {
 	exec: function() {
 		var phi = 0;
@@ -130,32 +154,36 @@ MYAPP.Objects.Triangle.prototype = {
 	}()
 };
 
-MYAPP.Objects.Earth = function(d,r,w,color,scene) {
-	this.r = ( r !== undefined ) ? r : 10;
-	this.d = ( d !== undefined ) ? d : 100;
-	this.w = ( w !== undefined ) ? w : 0.1;
+MYAPP.Objects.Earth = function( params ) { //d,r,w,color) {
+	this.r = 80;
+	this.d = 7;
+	this.w = 0.05;
+	this.color = 0xffffff;
+	this.textureName = 'moon';
 	this.phi = 0;
-	this.scene = scene;
-	
-	this.isEnableTracking = true;
-		
-	var color = ( color !== undefined ) ? color : 0x000000;
 
-	var material = new THREE.MeshLambertMaterial( { color: color, shading: THREE.FlatShading});
-	var geometry = new THREE.SphereGeometry( d, 20, 10 );
+	MYAPP.Objects.setValues.apply(this, [params]);
+
+	var texture = THREE.ImageUtils.loadTexture(MYAPP.Objects.textureMap[this.textureName]);
+	texture.needsUpdate = true;
+
+	var material = new THREE.MeshLambertMaterial( { map: texture, color: this.color, ambient: 0x222222, shading: THREE.FlatShading});
+	var geometry = new THREE.SphereGeometry( this.d, 40, 20 );
 	this.mesh = new THREE.Mesh( geometry, material );
 	
 	this.mesh.rotation.x = Math.PI/2;
 	this.mesh.rotation.y = Math.PI/2;
+	this.mesh.dynamic = true;
 	this.mesh.updateMatrix();
 };
+
 MYAPP.Objects.Earth.prototype = {
 	exec: function() {
 		return function () {
 			this.mesh.position.x = this.r * Math.cos(this.phi);
 			this.mesh.position.y = this.r * Math.sin(this.phi);
 
-			this.mesh.rotation.y -= 0.02;
+			this.mesh.rotation.y -= 0.01;
 
 			this.phi += this.w;
 			if (this.phi > Math.PI*2){
@@ -170,24 +198,22 @@ MYAPP.main = function() {
 	
 	var scene = creator.createScene();
 
-	var objects = [ new MYAPP.Objects.Sun(20,0) , 
-		new MYAPP.Objects.Earth(7, 80, 0.05, 0x0000ff),
-		new MYAPP.Objects.Earth(12, 160, 0.02, 0x220000),
-		new MYAPP.Objects.Earth(12, 250, 0.03, 0x222000)];
+	var objects = [ new MYAPP.Objects.Sun(20,0),
+		new MYAPP.Objects.Earth( { r: 80, d: 7, w: 0.05, color: 0x00ffff} ),
+		new MYAPP.Objects.Earth( { r: 160 , d: 12 , w: 0.02, textureName: 'earth'} ),
+		new MYAPP.Objects.Earth( { r: 250, d: 12, w: 0.001, textureName: 'planet' } )];
 	
 	for ( var i = 0; i < objects.length; i++ ) {
 		scene.add(objects[i].mesh);
 	}
 	
-	creator.createAxes(200, scene);
+	//creator.createAxes(200, scene);
 
-	var light = new THREE.DirectionalLight( 0xffffff );
-	light.position.set( 1, 1, 1 );
+	var light = new THREE.PointLight( 0xffffff, 2, 1000  );
+	light.position.set( 0, 0, 0 );
 	scene.add( light );
-//	light = new THREE.DirectionalLight( 0x002288 );
-//	light.position.set( -1, -1, -1 );
-//	scene.add( light );
-	light = new THREE.AmbientLight( 0x555555 );
+
+	light = new THREE.AmbientLight( 0xffffff );
 	scene.add( light );
 
 	var camera = creator.createCamera();
