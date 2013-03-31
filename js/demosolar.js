@@ -8,64 +8,39 @@
 var MYAPP = {
 };
 
+MYAPP.debugaxis = function(axisLength, scene){
+	//Shorten the vertex function
+	function v(x,y,z){
+		return new THREE.Vertex(new THREE.Vector3(x,y,z));
+	}
 
-MYAPP.MyCube = function() {
-	var materials = [
-		//делаем каждую сторону своего цвета
-		new THREE.MeshBasicMaterial({ color:0xE01B4C }), // правая сторона
-		new THREE.MeshBasicMaterial({ color:0x34609E }), // левая сторона
-		new THREE.MeshBasicMaterial({ color:0x7CAD18 }), //верх
-		new THREE.MeshBasicMaterial({ color:0x00EDB2 }), // низ
-		new THREE.MeshBasicMaterial({ color:0xED7700 }), // лицевая сторона
-		new THREE.MeshBasicMaterial({ color:0xB5B1AE }) // задняя сторона
-	];
-	//создаем куб со стороной 50 и размерами сегментов 1, применяем к нему массив материалов
-	var cube = new THREE.CubeGeometry(50, 50, 50, 1, 1, 1, materials);
-	//создаем мэш для куба, в качестве материала мэша
-	//будет браться тот, который применен к кубу
-	this.mesh = new THREE.Mesh(cube, new THREE.MeshFaceMaterial());
-	//указываем позицию по оси y
-	this.mesh.position.y = -10;
-	//добавляем тень кубу
-	new THREE.ShadowVolume(this.mesh);
-}
-MYAPP.MyCube.prototype = {
-	exec : function() {
-		var phi = 0;
-		return function() {
-			//вращаем куб по всем трем осям (переменная мэша куба доступна глобально)
-			this.mesh.rotation.x += 0.5 * Math.PI / 90;
-			this.mesh.rotation.y += 1.0 * Math.PI / 90;
-			this.mesh.rotation.z += 1.5 * Math.PI / 90;
-			//двигаем куб по кругу
-			this.mesh.position.x = Math.sin(phi) * 50;
-			this.mesh.position.y = Math.cos(phi) * 50;
-			//итерируем глобальную переменную
-			phi += 0.05;
-		}
-	}()
-}
+	//Create axis (point1, point2, colour)
+	function createAxis(p1, p2, color){
+		var line, lineGeometry = new THREE.Geometry(),
+			lineMat = new THREE.LineBasicMaterial({color: color, lineWidth: 1});
+		lineGeometry.vertices.push(p1, p2);
+		line = new THREE.Line(lineGeometry, lineMat);
+		scene.add(line);
+	}
+
+	createAxis(v(-axisLength, 0, 0), v(axisLength, 0, 0), 0xFF0000);
+	createAxis(v(0, -axisLength, 0), v(0, axisLength, 0), 0x00FF00);
+	createAxis(v(0, 0, -axisLength), v(0, 0, axisLength), 0x0000FF);
+};
+
 
 MYAPP.Creator = function() {}
 MYAPP.Creator.prototype = {
 	sceneCreator : function () {
 		var scene = new THREE.Scene();
-
-		//создаем наш "пол". Это будет псевдокуб со сторонами в 600х600 и глубиной 5
-		var floorgeo = new THREE.CubeGeometry(600, 600, 5);
-		//создаем мэш для него с материалом заданного цвета и прозрачностью
-		var floormesh = new THREE.Mesh(floorgeo, new THREE.MeshBasicMaterial({color:0x248C0F, opacity:0.9}));
-		//устанавливаем позицию нашему полу
-		floormesh.position.y = -200;
-		//и разворачиваем его по оси х так, чтобы он был параллелен ей.
-		floormesh.rotation.x = 90 * Math.PI / 180;
-		//добавляем к сцене
-		scene.addChild(floormesh);
-
+		MYAPP.debugaxis(200,scene);
 		return scene;
 	},
 	cameraCreator : function () {
-		var camera = new THREE.TrackballCamera({
+		var camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 1000 );
+		//camera.position.set( 0, 175, 250 );
+		//camera.
+		/*new THREE.TrackballCamera({
 			fov:45,
 			aspect:window.innerWidth / window.innerHeight,
 			near:1,
@@ -75,24 +50,48 @@ MYAPP.Creator.prototype = {
 			panSpeed:0.8,
 			noZoom:false,
 			noPan:false
-		});
+		});*/
 		//устанавливаем камере позицию, немного разворачиваем её, чтобы она смотрела на нашу плоскость
 		camera.position.z = 250;
-		camera.position.y = 175;
-		camera.target.position.y = -75;
+		camera.position.y = 0;
+		//camera.target.position.y = -75;
 
 		return camera;
 	},
 	lightCreate : function () {
 		//устанавливаем белый свет
-		var light = new THREE.DirectionalLight(0xffffff);
+
+		var light = new THREE.PointLight(0xffffff);
+		//var light = new THREE.AmbientLight(0x444444);
 		//да, объекты должны отбрасывать тень
 		light.castShadow = true;
 		//сам пол у нас в -150, свет соотв. ставим выше (в 1 по y и 0 по x и z), чтобы он попадал на наш куб и заставлял его отбрасывать тень
 		//напомню, что свет двигается от указанной точки к началу координат
-		light.position.set(0, 1, 0);
+		light.position.set(0, 30, 0);
 
 		return light;
+	},
+	light2Create : function () {
+		var light = new THREE.AmbientLight(0x444444);
+		return light;
+	},
+	controlCreate : function(render, camera) {
+		var controls = new THREE.TrackballControls( camera );
+
+		controls.rotateSpeed = 1.0;
+		controls.zoomSpeed = 1.2;
+		controls.panSpeed = 0.8;
+
+		controls.noZoom = false;
+		controls.noPan = false;
+
+		controls.staticMoving = true;
+		controls.dynamicDampingFactor = 0.3;
+
+		controls.keys = [ 65, 83, 68 ];
+
+		controls.addEventListener( 'change', render );
+		return controls;
 	}
 }
 
@@ -104,13 +103,18 @@ MYAPP.Executer.prototype = {
 		for( var i = 0; i < this.obj_array.length; i++){
 			this.obj_array[i].exec();
 		}
-
 	}
 }
 
 MYAPP.start = function () {
-	var container = $('div').attr('id', 'cardfield');
-	$('body').append(container);
+
+
+	var renderer = new THREE.WebGLRenderer( { antialias: false } );
+	//renderer.setClearColor( scene.fog.color, 1 );
+	renderer.setSize( window.innerWidth, window.innerHeight );
+
+	var container = document.getElementById( 'container' );
+	container.appendChild( renderer.domElement );
 
 	var creator = new MYAPP.Creator();
 
@@ -118,23 +122,37 @@ MYAPP.start = function () {
 	var scene = creator.sceneCreator();
 	var camera = creator.cameraCreator();
 	var light = creator.lightCreate();
-	var object = new MYAPP.MyCube();
+	var object = new MYAPP.MyEarth();
+
 
 	//добавляем к сцене
-	scene.addChild(object.mesh);
-	scene.addChild(light);
+	scene.add(object.mesh);
+	scene.add(light);
+	//scene.add(creator.light2Create());
 
 	var executer = new MYAPP.Executer([object]);
 
+	var controls = creator.controlCreate(renderer,camera);
+	window.addEventListener( 'resize', onWindowResize, false );
 
-	var renderer = new THREE.WebGLRenderer();
-	renderer.setSize(window.innerWidth, window.innerHeight);
-	container.append(renderer.domElement);
+	function onWindowResize() {
+
+		camera.aspect = window.innerWidth / window.innerHeight;
+		camera.updateProjectionMatrix();
+
+		renderer.setSize( window.innerWidth, window.innerHeight );
+
+		controls.handleResize();
+
+		render();
+
+	}
 
 	animate();
 
 	function animate() {
 		requestAnimationFrame(animate);
+		//controls.update();
 		render();
 	}
 
