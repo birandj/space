@@ -4,7 +4,8 @@ MYAPP.Creator = function () {
 };
 MYAPP.Creator.prototype = {
 	createRenderer : function() {
-		var renderer = new THREE.CanvasRenderer( { antialias: false } );
+		//var renderer = new THREE.CanvasRenderer( { antialias: false } );
+		var renderer = new THREE.WebGLRenderer( { antialias: false } );
 		renderer.setSize( window.innerWidth, window.innerHeight );
 		return renderer;
 	},	
@@ -17,11 +18,6 @@ MYAPP.Creator.prototype = {
 	createScene : function() {
 		var scene = new THREE.Scene();
 		return scene;
-	},
-	createLight : function() {
-		var light = new THREE.PointLight( 0xffffff, 10, 1000  );
-		light.position.set( 0, 0, 0 );
-		return light;
 	},
 	createControls : function( camera, render ) {
 		var controls = new THREE.TrackballControls( camera );
@@ -50,7 +46,7 @@ MYAPP.Creator.prototype = {
 		return stats;
 	},
 	createAxes : function( axisLength, scene ) {
-    //Shorten the vertex function
+        //Shorten the vertex function
     	function v(x,y,z){ 
 			return new THREE.Vertex(new THREE.Vector3(x,y,z)); 
     	}
@@ -74,17 +70,21 @@ MYAPP.Creator.prototype = {
 MYAPP.Objects = {};
 MYAPP.Objects.Sun = function(d,r) {
 	this.r = r;
-	var texture = THREE.ImageUtils.loadTexture('images/sun2.jpg');
+	var texture = THREE.ImageUtils.loadTexture('images/sun1.jpg');
+	texture.needsUpdate = true;
+
     var material = new THREE.MeshLambertMaterial( { map: texture, color: 0xff0000 , shading: THREE.FlatShading  } );
     
 	//var material = new THREE.MeshLambertMaterial( { color: 0xff0000 , shading: THREE.FlatShading});
 	var geometry = new THREE.SphereGeometry( d, 20, 10  );
 	this.mesh = new THREE.Mesh( geometry, material );
-	
+	this.mesh.dynamic = true;
+
 	this.mesh.rotation.x = Math.PI/2;
 	this.mesh.rotation.y = Math.PI/2;
 		
 	this.mesh.updateMatrix();
+	this.mesh.matrixAutoUpdate = false;
 };
 MYAPP.Objects.Sun.prototype = {
 	exec: function() {
@@ -111,7 +111,6 @@ MYAPP.Objects.Triangle = function(r) {
 		
 	this.mesh.updateMatrix();
 	this.r = r;
-	//this.mesh.matrixAutoUpdate = false;
 };
 MYAPP.Objects.Triangle.prototype = {
 	exec: function() {
@@ -181,43 +180,36 @@ MYAPP.main = function() {
 	}
 	
 	creator.createAxes(200, scene);
-	
-	scene.add(creator.createLight());
-			/*	var light = new THREE.DirectionalLight( 0xffffff );
-				light.position.set( 1, 1, 1 );
-				scene.add( light );
 
-				light = new THREE.DirectionalLight( 0x002288 );
-				light.position.set( -1, -1, -1 );
-				scene.add( light );
+	var light = new THREE.DirectionalLight( 0xffffff );
+	light.position.set( 1, 1, 1 );
+	scene.add( light );
+//	light = new THREE.DirectionalLight( 0x002288 );
+//	light.position.set( -1, -1, -1 );
+//	scene.add( light );
+	light = new THREE.AmbientLight( 0x555555 );
+	scene.add( light );
 
-				light = new THREE.AmbientLight( 0x222222 );
-				scene.add( light );
-				/*var ambientLight = new THREE.AmbientLight( Math.random() * 0x202020 );
-				scene.add( ambientLight );
-
-				var directionalLight = new THREE.DirectionalLight( Math.random() * 0xffffff );
-				directionalLight.position.set( 0, 1, 0 );
-				scene.add( directionalLight );
-
-				var pointLight = new THREE.PointLight( 0xff0000, 1, 500 );
-				scene.add( pointLight );*/
-
-	
 	var camera = creator.createCamera();
 	var controls = creator.createControls(camera, render);
 
 	var renderer = creator.createRenderer();
 
-	var container = document.getElementById( 'container' );
-	container.appendChild( renderer.domElement );
+	var container = $( 'div' ).attr('id','cardfield');
+	$('body').append( container );
+
+	container.append( renderer.domElement );
 	
 	var stats = creator.createStats();
-	container.appendChild( stats.domElement );
+	container.append( stats.domElement );
 
 	window.addEventListener( 'resize', onWindowResize, false );
 	
-	animate();
+
+
+	$(window).load(function() {
+		animate();
+	});
 	
 	function onWindowResize() {
 
@@ -227,7 +219,6 @@ MYAPP.main = function() {
 		renderer.setSize( window.innerWidth, window.innerHeight );
 
 		controls.handleResize();
-		//render();
 	}
 
 	function animate() {
